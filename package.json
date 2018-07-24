@@ -1,0 +1,20 @@
+{
+  "name": "metalsmith-postcss",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Gwilyn Saunders",
+  "license": "ISC",
+  "peerDependencies": {
+    "postcss": ">5.0.0"
+  },
+  "devDependencies": {
+    "postcss": "^7.0.1"
+  },
+  "dependencies": {
+    "multimatch": "^2.1.0"
+  }
+}
