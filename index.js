@@ -1,30 +1,34 @@
 
 const path = require('path')
 const match = require('multimatch')
-const realpostcss = require('postcss')
+// load as a peerDependency
+const realpostcss = (function() {
+    const target = require.resolve('postcss', module.parent);
+    return require(target);
+})()
 
 module.exports = function main(options) {
     options = Object.assign({
         pattern: '**/*.css',    // Only process these files
         config: null,           // load a PostCSS config from elsewhere
         plugins: {},            // plugin map {module-name -> {options}}
-        map: null,              // sourcemaps
-        parser: null,           // parser module
-        synctax: null,          // syntax module
+        // any valid postcss options
     }, options)
     
     // plugin export
     return async function postcss(files, metalsmith, done) {
         try {
+            const {pattern, config, ...other} = options;
+            
             // filter for processing files
-            const validFiles = match(Object.keys(files), options.pattern);
+            const validFiles = match(Object.keys(files), pattern);
             
             if (validFiles.length === 0) {
-                throw new Error(`Pattern '${options.pattern}' did not match any files.`);
+                throw new Error(`Pattern '${pattern}' did not match any files.`);
             }
             
             // settings for postcss
-            const {plugins, settings} = await loadConfig(options, metalsmith._directory);
+            const {plugins, settings} = loadConfig(config, other);
             
             const engine = realpostcss(plugins);
             
@@ -74,29 +78,20 @@ function move(files, filename) {
 }
 
 /**
- * Attempt to load the config file if specified. Loaded settings will
- * override those specified in the 'options'.
+ * Attempt to load the config file if specified. Local (options) settings will
+ * override those loaded from the config file.
  */
-function loadConfig(options, dirname) {
-    return new Promise(resolve => {
-        let {pattern, config, plugins, ...settings} = options;
-        
-        // load a config if present, prefer settings from options
-        if (config) {
-            const target = require.resolve(config, module.parent);
-            const loaded = require(target);
-            plugins = {...plugins, ...loaded.plugins},
-            settings = {
-                ...loaded,
-                ...settings,
-            }
-        }
-        // replace plugin map with list of plugin modules
-        resolve({
-            plugins: loadPlugins(plugins),
-            settings,
-        });
-    })
+function loadConfig(config, options) {
+    let {plugins, ...settings} = options;
+    // load a config if present, prefer settings from options
+    if (config) {
+        const target = require.resolve(config, module.parent);
+        const loaded = require(target);
+        plugins = {...plugins, ...loaded.plugins}
+        settings = {...loaded, ...settings}
+    }
+    // replace plugin map with list of plugin modules
+    return {settings, plugins: loadPlugins(settings.plugins)}
 }
 
 /**
