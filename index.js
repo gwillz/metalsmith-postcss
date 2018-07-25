@@ -105,3 +105,8 @@ function loadPlugins(plugins) {
         return require(target)(args);
     })
 }
+
+// export utility functions for testing
+exports.move = move;
+exports.loadConfig = loadConfig;
+exports.loadPlugins = loadPlugins;
