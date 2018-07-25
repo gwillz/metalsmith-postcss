@@ -6,17 +6,12 @@ const Metalsmith = require('metalsmith')
 const postcss = require('./index')
 
 test("Execute example project", assert => {
-    new Metalsmith(path.resolve(__dirname, 'test/'))
-    .clean(true)
-    .source('src')
-    .destination('dest')
-    
+    create()
     // call our plugin
     .use(postcss({
         pattern: "index.css",
         config: "postcss.config.js",
     }))
-    
     // asserts performed in async
     .build((err, files) => {
         if (err) assert.fail(err);
@@ -32,10 +27,74 @@ test("Execute example project", assert => {
     })
 })
 
-// TODO test empty pattern
+test("Empty pattern", assert => {
+    create()
+    .use(postcss({
+        pattern: "foo.bar"
+    }))
+    .build((err, files) => {
+        assert.ok(!!err, "error for bad pattern");
+        assert.end();
+    })
+})
 
-// TODO test move(), renaming and ignoring files
+test("move()", assert => {
+    const files = {
+        'foo.css': '1234',
+        'bar.sss': '5678',
+    }
+    
+    for (let file in files) {
+        postcss.move(files, file);
+    }
+    
+    assert.equal(files['foo.css'], '1234', "[foo.css] is unchanged");
+    assert.equal(files['bar.css'], '5678', "[bar.css] now exists");
+    assert.notOk(files['bar.sss'], "[bar.sss] should not exist");
+    
+    assert.end();
+})
 
-// TODO test loadConfig(), merging settings
+test("loadConfig()", assert => {
+    const actual = postcss.loadConfig('./test/postcss.config.js', {
+        map: true,
+        another: 123,
+    })
+    const expected = {
+        map: true,
+        another: 123,
+        plugins: {
+            'postcss-import': {},
+            'postcss-preset-env': {stage: 1},
+        },
+    }
+    
+    assert.deepEqual(actual, expected);
+    assert.end();
+})
 
-// TODO test loadPlugin()
+test("loadPlugins()", assert => {
+    const actual = postcss.loadPlugins({
+        'postcss-import': {},
+        'postcss-preset-env': {stage: 1},
+    })
+    
+    assert.equal(typeof actual[0], 'function', "loaded plugin[0] is a function");
+    assert.equal(typeof actual[1], 'function', "loaded plugin[1] is a function");
+    assert.ok(actual[0].postcssVersion, "function is a postcss plugin");
+    assert.equal(
+        actual[0].postcssVersion,
+        actual[1].postcssVersion,
+        "[postcssVersion] matches"
+    );
+    assert.end();
+})
+
+
+// shorthand
+function create() {
+    return new Metalsmith(path.resolve(__dirname, 'test/'))
+    .clean(true)
+    .source('src')
+    .destination('dest')
+}

@@ -28,10 +28,11 @@ module.exports = function main(options) {
             }
             
             // settings for postcss
-            const {plugins, settings} =
-                loadConfig(path.resolve(metalsmith._directory, config), other);
+            const {plugins, ...settings} = (config)
+                ? loadConfig(path.resolve(metalsmith._directory, config))
+                : other;
             
-            const engine = realpostcss(plugins);
+            const engine = realpostcss(loadPlugins(plugins));
             
             // do the thing, concurrently
             await Promise.all(validFiles.map(file => (
@@ -68,31 +69,24 @@ function render(engine, file, settings) {
  * Rename a file, abc.* -> abc.css
  */
 function move(files, filename) {
-    const {dir, name, ext} = path.parse(filename);
+    const {dir, name} = path.parse(filename);
     const newname = path.join(dir, name + '.css');
     
-    // don't rename if it's indentical or not applicable
-    if (newname !== filename && ext !== '.css') {
+    // don't rename if it's not applicable
+    if (newname !== filename) {
         files[newname] = files[filename];
         delete files[filename];
     }
 }
 
 /**
- * Attempt to load the config file if specified. Local (options) settings will
+ * Load a config file. Local (options) settings will
  * override those loaded from the config file.
+ * This does a lookup that respects peerDependencies.
  */
-function loadConfig(config, options) {
-    let {plugins, ...settings} = options;
-    // load a config if present, prefer settings from options
-    if (config) {
-        const target = require.resolve(config, module.parent);
-        const loaded = require(target);
-        plugins = {...plugins, ...loaded.plugins}
-        settings = {...loaded, ...settings}
-    }
-    // replace plugin map with list of plugin modules
-    return {settings, plugins: loadPlugins(settings.plugins)}
+function loadConfig(config, settings) {
+    const target = require.resolve(config, module.parent);
+    return {...require(target), ...settings};
 }
 
 /**
@@ -107,6 +101,6 @@ function loadPlugins(plugins) {
 }
 
 // export utility functions for testing
-exports.move = move;
-exports.loadConfig = loadConfig;
-exports.loadPlugins = loadPlugins;
+module.exports.move = move;
+module.exports.loadConfig = loadConfig;
+module.exports.loadPlugins = loadPlugins;
