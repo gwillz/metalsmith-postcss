@@ -1,0 +1,14 @@
+
+@import "./other.css";
+
+body, html {
+    display: flex;
+}
+
+main {
+    background: #aabbccdd;
+    
+    & article {
+        background: papayawhip;
+    }
+}

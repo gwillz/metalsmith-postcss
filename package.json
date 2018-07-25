@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "prepare": "true",
+    "test": "nyc tape test.js | tap-spec"
   },
   "author": "Gwilyn Saunders",
   "license": "ISC",
@@ -13,5 +14,14 @@
   },
   "dependencies": {
     "multimatch": "^2.1.0"
+  },
+  "devDependencies": {
+    "metalsmith": "^2.3.0",
+    "nyc": "^12.0.2",
+    "postcss": "^7.0.1",
+    "postcss-import": "^11.1.0",
+    "postcss-preset-env": "^5.2.3",
+    "tap-spec": "^5.0.0",
+    "tape": "^4.9.1"
   }
 }

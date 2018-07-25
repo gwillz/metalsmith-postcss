@@ -1,0 +1,21 @@
+
+.other {
+    -webkit-flex: 1 1 auto;
+        -ms-flex: 1 1 auto;
+            flex: 1 1 auto;
+    color: #639;
+}
+
+body, html {
+    display: -webkit-flex;
+    display: -ms-flexbox;
+    display: flex;
+}
+
+main {
+    background: rgba(170, 187, 204, 0.86667);
+    
+    & article {
+        background: papayawhip;
+    }
+}
