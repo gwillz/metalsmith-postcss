@@ -29,7 +29,7 @@ module.exports = function main(options) {
             
             // settings for postcss
             const {plugins, ...settings} = (config)
-                ? loadConfig(path.resolve(metalsmith._directory, config))
+                ? loadConfig(path.resolve(metalsmith.directory(), config))
                 : other;
             
             const engine = realpostcss(loadPlugins(plugins));
@@ -38,8 +38,8 @@ module.exports = function main(options) {
             await Promise.all(validFiles.map(file => (
                 render(engine, files[file], {
                     ...settings,
-                    from: path.resolve(metalsmith._directory, metalsmith._source, file),
-                    to: path.resolve(metalsmith._directory, metalsmith._destination, file),
+                    from: path.resolve(metalsmith.source(), file),
+                    to: path.resolve(metalsmith.destination(), file),
                 })
             )))
             
