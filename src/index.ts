@@ -1,19 +1,38 @@
 
-const path = require('path')
-const match = require('multimatch')
+import path from 'path';
+import match from 'multimatch';
+import type { Processor, ProcessOptions, AcceptedPlugin } from 'postcss';
+import type { Plugin, Files } from 'metalsmith';
+
+type postcss = (plugins?: AcceptedPlugin[]) => Processor;
+
 // load as a peerDependency
 const realpostcss = (function() {
-    const target = require.resolve('postcss', module.parent);
+    const target = require.resolve('postcss', module.parent!);
     return require(target);
-})()
+})() as postcss;
 
-module.exports = function main(options) {
-    options = Object.assign({
-        pattern: '**/*.css',    // Only process these files
-        config: null,           // load a PostCSS config from elsewhere
-        plugins: {},            // plugin map {module-name -> {options}}
+// plugin map {module-name -> {options}}
+interface PostPlugins extends Record<string, any> {}
+
+interface Config extends ProcessOptions {
+    plugins: PostPlugins;
+}
+
+interface Options extends Config {
+    pattern: string;  // Only process these files
+    config?: string;  // load a PostCSS config from elsewhere
+}
+
+export = main;
+
+function main(opts: Partial<Options>): Plugin {
+    const options: Options = {
+        pattern: '**/*.css',
+        plugins: {},
         // any valid postcss options
-    }, options)
+        ...opts,
+    };
     
     // plugin export
     return async function postcss(files, metalsmith, done) {
@@ -28,8 +47,8 @@ module.exports = function main(options) {
             }
             
             // settings for postcss
-            const {plugins, ...settings} = (config)
-                ? loadConfig(path.resolve(metalsmith.directory(), config))
+            let {plugins, ...settings} = !!config
+                ? loadConfig(path.resolve(metalsmith.directory(), config), other)
                 : other;
             
             const engine = realpostcss(loadPlugins(plugins));
@@ -47,10 +66,10 @@ module.exports = function main(options) {
             for (let filename of validFiles) {
                 move(files, filename);
             }
-            done();
+            done(null, files, metalsmith);
         }
         catch (err) {
-            done(err);
+            done(err, files, metalsmith);
         }
     }
 }
@@ -58,17 +77,17 @@ module.exports = function main(options) {
 /**
  * Perform PostCSS processing.
  */
-function render(engine, file, settings) {
+function render(engine: Processor, file: any, settings: ProcessOptions) {
     return engine.process(file.contents.toString(), settings)
     .then(result => {
-      file.contents = new Buffer(result.css);
+      file.contents = Buffer.from(result.css);
     })
 }
 
 /**
  * Rename a file, abc.* -> abc.css
  */
-function move(files, filename) {
+function move(files: Files, filename: string) {
     const {dir, name} = path.parse(filename);
     const newname = path.join(dir, name + '.css');
     
@@ -84,23 +103,29 @@ function move(files, filename) {
  * override those loaded from the config file.
  * This does a lookup that respects peerDependencies.
  */
-function loadConfig(config, settings) {
-    const target = require.resolve(config, module.parent);
-    return {...require(target), ...settings};
+function loadConfig(config: string, settings: Config): Config {
+    const target = require.resolve(config, module.parent!);
+    const loaded = require(target);
+    
+    return {
+        ...loaded,
+        ...settings,
+        plugins: loaded.plugins || settings.plugins,
+    };
 }
 
 /**
  * Load plugin map (name -> args) and return a list of plugin modules.
  */
-function loadPlugins(plugins) {
+function loadPlugins(plugins: PostPlugins): AcceptedPlugin[] {
     return Object.entries(plugins).map(([name, args]) => {
         // this ensures we get the path relative to the calling script
-        const target = require.resolve(name, module.parent);
+        const target = require.resolve(name, module.parent!);
         return require(target)(args);
     })
 }
 
 // export utility functions for testing
-module.exports.move = move;
-module.exports.loadConfig = loadConfig;
-module.exports.loadPlugins = loadPlugins;
+main.move = move;
+main.loadConfig = loadConfig;
+main.loadPlugins = loadPlugins;
