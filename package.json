@@ -4,6 +4,15 @@
   "description": "A glob-based PostCSS plugin for Metalsmith.",
   "main": "build/index.js",
   "types": "build/index.d.ts",
+  "keywords": [
+    "metalsmith",
+    "postcss",
+    "css",
+    "css4",
+    "static",
+    "plugin",
+    "autoprefixer"
+  ],
   "repository": {
     "type": "git",
     "url": "github.com/gwillz/metalsmith-postcss"
@@ -15,6 +24,10 @@
   },
   "author": "Gwilyn Saunders",
   "license": "MIT",
+  "files": [
+    "build",
+    "README.md"
+  ],
   "peerDependencies": {
     "postcss": ">5.0.0"
   },
