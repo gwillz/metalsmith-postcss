@@ -2,7 +2,7 @@
   "name": "@goodthnx/metalsmith-postcss",
   "version": "1.1.0",
   "description": "A glob-based PostCSS plugin for Metalsmith.",
-  "main": "src/index.js",
+  "main": "build/index.js",
   "types": "build/index.d.ts",
   "repository": {
     "type": "git",
