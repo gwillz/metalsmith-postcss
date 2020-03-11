@@ -3,13 +3,13 @@ const test = require('tape')
 const path = require('path')
 const fs = require('fs')
 const Metalsmith = require('metalsmith')
-const postcss = require('./index')
+const postcss = require('./build/index')
 
 test("Execute example project", assert => {
     create()
     // call our plugin
     .use(postcss({
-        pattern: "index.css",
+        pattern: "index.sss",
         config: "postcss.config.js",
     }))
     // asserts performed in async
@@ -22,7 +22,7 @@ test("Execute example project", assert => {
         const expected = fs.readFileSync('./test/expected.css', 'utf-8');
         
         // verify
-        assert.equal(actual, expected, 'output matchs [expected.css]');
+        assert.equal(actual, expected, 'output matches [expected.css]');
         assert.end();
     })
 })
